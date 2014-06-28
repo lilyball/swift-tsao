@@ -23,7 +23,7 @@ func setup() -> Foo {
 }
 
 // this is hacky, but I'm not sure how to do this from the terminal otherwise
-@asmname("main") func main() {
+@asmname("main") func main() -> CInt {
     let f = setup()
 
     println("\nFetching associated objects...")
@@ -49,4 +49,6 @@ func setup() -> Foo {
     println("\nClearing associated value...")
     associatedObjects(f).set(aryKey, value: nil)           // takes String[]?
     println("aryKey: \(associatedObjects(f).get(aryKey))") // returns String[]?
+
+    return 0
 }

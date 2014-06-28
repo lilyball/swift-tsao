@@ -2,48 +2,53 @@
 
 import Foundation
 
-// use OnHeap for values
-
-enum AssocPolicy {
-    case Assign
-    case Retain(atomic: Bool)
-    case Copy(atomic: Bool)
-
-    func _toObjc() -> objc_AssociationPolicy {
-        switch self {
-            case .Assign:
-                return UInt(OBJC_ASSOCIATION_ASSIGN)
-            case .Retain(atomic: let flag):
-                return UInt(flag ? OBJC_ASSOCIATION_RETAIN : OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-            case .Copy(atomic: let flag):
-                return UInt(flag ? OBJC_ASSOCIATION_COPY : OBJC_ASSOCIATION_COPY_NONATOMIC)
-        }
-    }
-}
-
 // AssocKey represents an associated objects key, with a given value type.
+//
+// Create new keys with newAssocKey(). Keys should be toplevel let-bindings
+// and should never deinit. If a key deinits, an assertion is thrown.
+// This is to preserve the type-safety of the associated values.
+//
+// Keys with a class value type may use the assign policy, and keys with a
+// value type that conforms to NSCopying may use the copy policy. Value types
+// must always use the default retain policy.
+//
+// @see newAssocKey
 class AssocKey<ValueType> {
-    // note: for some reason objc_AssociationPolicy is a UInt but all the
-    // defined values are computed properties of type Int.
-    let _policy: objc_AssociationPolicy = UInt(OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    let _policy: objc_AssociationPolicy
 
-    init() {}
+    init(_private: objc_AssociationPolicy) {
+        _policy = _private
+    }
 
-    init(_private: AssocPolicy) {
-        _policy = _private._toObjc()
+    deinit {
+        assert(false, "AssocKey must not deinit")
     }
 }
 
-// Create a new AssocKey for any value
-func newAssocKey<ValueType>() -> AssocKey<ValueType> {
-    return AssocKey()
+// Create a new AssocKey for any value.
+//
+// This uses the retain policy.
+func newAssocKey<ValueType>(atomic: Bool = false) -> AssocKey<ValueType> {
+    let policy = atomic ? OBJC_ASSOCIATION_RETAIN : OBJC_ASSOCIATION_RETAIN_NONATOMIC
+    return AssocKey(_private: objc_AssociationPolicy(policy))
 }
 
-// Create a new AssocKey for any obj-c value with a given policy
-func newAssocKey<ValueType: AnyObject>(policy: AssocPolicy) -> AssocKey<ValueType> {
-    return AssocKey(_private: policy)
+// Create a new AssocKey for any class value with the assign policy.
+//
+// This looks a bit weird, but it can be invoked as <tt>newAssocKey(assign: ())</tt>.
+func newAssocKey<ValueType: AnyObject>(#assign: ()) -> AssocKey<ValueType> {
+    return AssocKey(_private: objc_AssociationPolicy(OBJC_ASSOCIATION_ASSIGN))
 }
 
+// Create a new AssocKey for any NSCopying value with the copy policy.
+func newAssocKey<ValueType: NSCopying>(copyAtomic atomic: Bool) -> AssocKey<ValueType> {
+    let policy = atomic ? OBJC_ASSOCIATION_COPY : OBJC_ASSOCIATION_COPY_NONATOMIC
+    return AssocKey(_private: objc_AssociationPolicy(policy))
+}
+
+// The data type that mediates access to associated objects.
+//
+// Use the associatedObjects() function to create an instance of this type.
 struct AssociatedObjectView {
     var _object: AnyObject
 
@@ -51,49 +56,66 @@ struct AssociatedObjectView {
         _object = object
     }
 
-    // ideally this would be a subscript but those can't be generic
-    func getValue<ValueType>(key: AssocKey<ValueType>) -> ValueType? {
-        withObjectAtPlusZero(key) {
+    // Get an associated object for a given key.
+    //
+    // Ideally this would be a subscript operator but those don't support
+    // generics.
+    func get<ValueType>(key: AssocKey<ValueType>) -> ValueType? {
+        return _get(key) {
+            // skip the runtime type test, we know it's the right type
+            let box: _AssocValueBox<ValueType> = reinterpretCast($0)
+            return box._storage
+        }
+    }
+
+    func get<ValueType: AnyObject>(key: AssocKey<ValueType>) -> ValueType? {
+        return _get(key) {
+            // skip the runtime type test, we know it's the right type
+            return reinterpretCast($0)
+        }
+    }
+
+    func _get<ValueType>(key: AssocKey<ValueType>, _ f: AnyObject -> ValueType) -> ValueType? {
+        return withObjectAtPlusZero(key) {
             (p: COpaquePointer) -> ValueType? in
             if let v: AnyObject = objc_getAssociatedObject(self._object, p) {
-                return AssociatedObjectView._extractValue(v)
+                return f(v)
             }
             return nil
         }
     }
 
-    func setValue<ValueType>(key: AssocKey<ValueType>, val: ValueType?) {
+    // Set an associated object for a given key.
+    //
+    // Ideally this would be a mutating subscript operator but those don't
+    // support generics.
+    func set<ValueType>(key: AssocKey<ValueType>, value: ValueType?) {
+        if let v = value {
+            _set(key, _AssocValueBox(v))
+        } else {
+            _set(key, nil)
+        }
+    }
+
+    func set<ValueType: AnyObject>(key: AssocKey<ValueType>, value: ValueType?) {
+        _set(key, value)
+    }
+
+    func _set<ValueType>(key: AssocKey<ValueType>, _ value: AnyObject?) {
         withObjectAtPlusZero(key) {
             (p: COpaquePointer) -> () in
-            if let v = val {
-                objc_setAssociatedObject(self._object, p, AssociatedObjectView._boxValue(v), key._policy)
+            if let v: AnyObject = value {
+                objc_setAssociatedObject(self._object, p, v, key._policy)
             } else {
                 objc_setAssociatedObject(self._object, p, nil, key._policy)
             }
         }
     }
-
-    static func _extractValue<ValueType: AnyObject>(v: AnyObject) -> ValueType {
-        return v as ValueType
-    }
-
-    static func _extractValue<ValueType>(v: AnyObject) -> ValueType {
-        // skip the runtime type test, we know it's the right type
-        let box: _AssocValueBox<ValueType> = reinterpretCast(v)
-        return box._storage
-    }
-
-    static func _boxValue<ValueType: AnyObject>(val: ValueType) -> AnyObject {
-        return val
-    }
-
-    static func _boxValue<ValueType>(val: ValueType) -> AnyObject {
-        return _AssocValueBox(val)
-    }
 }
 
 class _AssocValueBox<ValueType> {
-    // ideally this would store the value inline, but non-fixed class layouts are not currently supported
+    // this should store the value inline, but non-fixed class layouts are not
+    // currently supported
     var _storage: OnHeap<ValueType>
 
     init(_ v: ValueType) {
@@ -101,6 +123,7 @@ class _AssocValueBox<ValueType> {
     }
 }
 
-func associatedObjects(inout object: AnyObject) -> AssociatedObjectView {
+// Retrieve the associated object mapping for a given object.
+func associatedObjects(object: AnyObject) -> AssociatedObjectView {
     return AssociatedObjectView(_private: object)
 }

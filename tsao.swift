@@ -78,7 +78,8 @@ struct AssociatedObjectView {
     func _get<ValueType>(key: AssocKey<ValueType>, _ f: AnyObject -> ValueType) -> ValueType? {
         return withObjectAtPlusZero(key) {
             (p: COpaquePointer) -> ValueType? in
-            if let v: AnyObject = objc_getAssociatedObject(self._object, p) {
+            let p_ = ConstUnsafePointer<()>(p)
+            if let v: AnyObject = objc_getAssociatedObject(self._object, p_) {
                 return f(v)
             }
             return nil
@@ -104,10 +105,11 @@ struct AssociatedObjectView {
     func _set<ValueType>(key: AssocKey<ValueType>, _ value: AnyObject?) {
         withObjectAtPlusZero(key) {
             (p: COpaquePointer) -> () in
+            let p_ = ConstUnsafePointer<()>(p)
             if let v: AnyObject = value {
-                objc_setAssociatedObject(self._object, p, v, key._policy)
+                objc_setAssociatedObject(self._object, p_, v, key._policy)
             } else {
-                objc_setAssociatedObject(self._object, p, nil, key._policy)
+                objc_setAssociatedObject(self._object, p_, nil, key._policy)
             }
         }
     }

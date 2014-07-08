@@ -2,7 +2,7 @@ import Foundation
 
 let intKey: AssocKey<Int> = newAssocKey()
 let strKey: AssocKey<NSString> = newAssocKey(copyAtomic: false)
-let aryKey: AssocKey<String[]> = newAssocKey()
+let aryKey: AssocKey<[String]> = newAssocKey()
 
 let intKey2: AssocKey<Int> = newAssocKey()
 

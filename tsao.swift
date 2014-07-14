@@ -117,12 +117,10 @@ struct AssociatedObjectView {
 }
 
 class _AssocValueBox<ValueType> {
-    // this should store the value inline, but non-fixed class layouts are not
-    // currently supported
-    var _storage: OnHeap<ValueType>
+    var _storage: ValueType
 
     init(_ v: ValueType) {
-        _storage = OnHeap(v)
+        _storage = v
     }
 }
 

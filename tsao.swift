@@ -110,6 +110,8 @@ public struct AssociatedObjectView {
     }
 }
 
+// NB: we use our own private class here instead of OnHeap<T> because we
+// specifically need a class, and OnHeap is a struct.
 private class _AssocValueBox<ValueType> {
     var _storage: ValueType
 

@@ -64,7 +64,7 @@ public struct AssociatedObjectView {
     public func get<ValueType>(key: AssocKey<ValueType>) -> ValueType? {
         return _get(key) {
             // skip the runtime type test, we know it's the right type
-            let box: _AssocValueBox<ValueType> = reinterpretCast($0)
+            let box = unsafeBitCast($0, _AssocValueBox<ValueType>.self)
             return box._storage
         }
     }
@@ -72,12 +72,12 @@ public struct AssociatedObjectView {
     public func get<ValueType: AnyObject>(key: AssocKey<ValueType>) -> ValueType? {
         return _get(key) {
             // skip the runtime type test, we know it's the right type
-            return reinterpretCast($0)
+            return unsafeBitCast($0, ValueType.self)
         }
     }
 
     private func _get<ValueType>(key: AssocKey<ValueType>, _ f: AnyObject -> ValueType) -> ValueType? {
-        let p = ConstUnsafePointer<()>(Unmanaged.passUnretained(key).toOpaque())
+        let p = UnsafePointer<()>(Unmanaged.passUnretained(key).toOpaque())
         if let v: AnyObject = objc_getAssociatedObject(self._object, p) {
             return f(v)
         }
@@ -101,7 +101,7 @@ public struct AssociatedObjectView {
     }
 
     private func _set<ValueType>(key: AssocKey<ValueType>, _ value: AnyObject?) {
-        let p = ConstUnsafePointer<()>(Unmanaged.passUnretained(key).toOpaque())
+        let p = UnsafePointer<()>(Unmanaged.passUnretained(key).toOpaque())
         if let v: AnyObject = value {
             objc_setAssociatedObject(self._object, p, v, key._policy)
         } else {

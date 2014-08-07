@@ -22,8 +22,17 @@ func setup() -> Foo {
     return f
 }
 
-// this is hacky, but I'm not sure how to do this from the terminal otherwise
-@asmname("main") func main() -> CInt {
+// This is hacky, but I don't see any other way to do this right now, short of
+// renaming the file to `main.swift`.
+@asmname("main")
+func main(argc: CInt, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int8>>) -> CInt {
+    C_ARGC = argc
+    C_ARGV = argv
+    top_level_code()
+    return 0
+}
+
+func top_level_code() {
     let f = setup()
 
     println("\nFetching associated objects...")
@@ -49,6 +58,4 @@ func setup() -> Foo {
     println("\nClearing associated value...")
     associatedObjects(f).set(aryKey, value: nil)           // takes String[]?
     println("aryKey: \(associatedObjects(f).get(aryKey))") // returns String[]?
-
-    return 0
 }

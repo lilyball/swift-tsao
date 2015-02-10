@@ -26,8 +26,6 @@ func setup() -> Foo {
 // renaming the file to `main.swift`.
 @asmname("main")
 func main(argc: CInt, argv: UnsafeMutablePointer<UnsafeMutablePointer<Int8>>) -> CInt {
-    C_ARGC = argc
-    C_ARGV = argv
     top_level_code()
     return 0
 }

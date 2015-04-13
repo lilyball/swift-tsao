@@ -4,24 +4,24 @@ import Foundation
 
 /// AssocKey represents an associated objects key, with a given value type.
 ///
-/// Create new keys with newAssocKey(). Keys should be toplevel let-bindings
-/// and should never deinit. If a key deinits, an assertion is thrown.
-/// This is to preserve the type-safety of the associated values.
+/// Create new keys with `newAssocKey()`. Keys should be toplevel let-bindings
+/// and should never deinit. If a key deinits, an assertion is thrown. This is
+/// to preserve the type-safety of the associated values.
 ///
 /// Keys with a class value type may use the assign policy, and keys with a
-/// value type that conforms to NSCopying may use the copy policy. Value types
-/// must always use the default retain policy.
+/// value type that conforms to `NSCopying` may use the copy policy. Value
+/// types must always use the default retain policy.
 ///
-/// @see newAssocKey
-public class AssocKey<ValueType> {
+/// See also: `newAssocKey`
+public final class AssocKey<ValueType> {
     private let _policy: objc_AssociationPolicy
 
-    public init(_private: objc_AssociationPolicy) {
+    private init(_private: objc_AssociationPolicy) {
         _policy = _private
     }
 
     deinit {
-        assert(false, "AssocKey must not deinit")
+        fatalError("AssocKey must not deinit")
     }
 }
 
@@ -35,13 +35,12 @@ public func newAssocKey<ValueType>(atomic: Bool = false) -> AssocKey<ValueType> 
 
 /// Create a new AssocKey for any class value with the assign policy.
 ///
-/// This looks a bit weird, but it can be invoked as
-/// <tt>newAssocKey(assign: ())</tt>.
+/// This looks a bit weird, but it can be invoked as `newAssocKey(assign: ())`.
 public func newAssocKey<ValueType: AnyObject>(#assign: ()) -> AssocKey<ValueType> {
     return AssocKey(_private: objc_AssociationPolicy(OBJC_ASSOCIATION_ASSIGN))
 }
 
-/// Create a new AssocKey for any NSCopying value with the copy policy.
+/// Create a new AssocKey for any `NSCopying` value with the copy policy.
 public func newAssocKey<ValueType: NSCopying>(copyAtomic atomic: Bool) -> AssocKey<ValueType> {
     let policy = atomic ? OBJC_ASSOCIATION_COPY : OBJC_ASSOCIATION_COPY_NONATOMIC
     return AssocKey(_private: objc_AssociationPolicy(policy))
@@ -49,7 +48,7 @@ public func newAssocKey<ValueType: NSCopying>(copyAtomic atomic: Bool) -> AssocK
 
 /// The data type that mediates access to associated objects.
 ///
-/// Use the associatedObjects() function to create an instance of this type.
+/// Use the `associatedObjects()` function to create an instance of this type.
 public struct AssociatedObjectView {
     private var _object: AnyObject
 
@@ -110,8 +109,7 @@ public struct AssociatedObjectView {
     }
 }
 
-// NB: we use our own private class here instead of OnHeap<T> because we
-// specifically need a class, and OnHeap is a struct.
+// Helper class that wraps values for use with associated objects
 private class _AssocValueBox<ValueType> {
     var _storage: ValueType
 

@@ -24,7 +24,7 @@ via `make`.
 
 ```swift
 // create a new key that stores the value type Int
-let intKey: AssocKey<Int> = newAssocKey()
+let intKey = AssocKey<Int>()
 
 // fetch the associated object from `obj` using `intKey`
 func lookup_int_object(obj: AnyObject) -> Int? {
@@ -40,7 +40,7 @@ func set_int_object(obj: AnyObject, val: Int?) {
 }
 
 // This key stores values of type NSString with the nonatomic copy policy
-let strKey: AssocKey<NSString> = newAssocKey(copyAtomic: false)
+let strKey = AssocKey<NSString>(copyAtomic: false)
 
 // fetch the associated object from `obj` using `strKey`
 func lookup_str_object(obj: AnyObject) -> NSString? {

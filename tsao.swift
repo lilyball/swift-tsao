@@ -4,113 +4,131 @@ import Foundation
 
 /// AssocKey represents an associated objects key, with a given value type.
 ///
-/// Create new keys with `newAssocKey()`. Keys should be toplevel let-bindings
-/// and should never deinit. If a key deinits, an assertion is thrown. This is
-/// to preserve the type-safety of the associated values.
+/// Keys should be toplevel let-bindings. Every key that is created will live
+/// forever, even if you remove all references to it, so creating keys on the
+/// fly can be a memory leak. This is done to preserve the type-safety of the
+/// associated values.
 ///
 /// Keys with a class value type may use the assign policy, and keys with a
-/// value type that conforms to `NSCopying` may use the copy policy. Value
-/// types must always use the default retain policy.
-///
-/// See also: `newAssocKey`
-public final class AssocKey<ValueType> {
+/// value type that conforms to `NSCopying` may use the copy policy. Value types
+/// must always use the default retain policy.
+public struct AssocKey<ValueType> {
+    /// Initializes an `AssocKey` with a retain policy.
+    public init(atomic: Bool = false) {
+        self.init(_policy: atomic ? .OBJC_ASSOCIATION_RETAIN : .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    }
+
+    private init(_policy: objc_AssociationPolicy) {
+        self._policy = _policy
+    }
+
     private let _policy: objc_AssociationPolicy
+    private let _key: _AssocKey = _AssocKey()
+}
 
-    private init(_private: objc_AssociationPolicy) {
-        _policy = _private
+extension AssocKey where ValueType: AnyObject {
+    /// Initializes an `AssocKey` with an assign policy.
+    ///
+    /// This looks a bit weird, but it can be invoked as `AssocKey(assign: ())`.
+    public init(assign: ()) {
+        self.init(_policy: .OBJC_ASSOCIATION_ASSIGN)
     }
+}
 
-    deinit {
-        fatalError("AssocKey must not deinit")
+extension AssocKey where ValueType: NSCopying {
+    /// Initializes an `AssocKey` with a copy policy.
+    public init(copyAtomic atomic: Bool) {
+        self.init(_policy: atomic ? .OBJC_ASSOCIATION_COPY : .OBJC_ASSOCIATION_COPY_NONATOMIC)
     }
-}
-
-/// Create a new AssocKey for any value.
-///
-/// This uses the retain policy.
-public func newAssocKey<ValueType>(atomic: Bool = false) -> AssocKey<ValueType> {
-    let policy = atomic ? OBJC_ASSOCIATION_RETAIN : OBJC_ASSOCIATION_RETAIN_NONATOMIC
-    return AssocKey(_private: objc_AssociationPolicy(policy))
-}
-
-/// Create a new AssocKey for any class value with the assign policy.
-///
-/// This looks a bit weird, but it can be invoked as `newAssocKey(assign: ())`.
-public func newAssocKey<ValueType: AnyObject>(#assign: ()) -> AssocKey<ValueType> {
-    return AssocKey(_private: objc_AssociationPolicy(OBJC_ASSOCIATION_ASSIGN))
-}
-
-/// Create a new AssocKey for any `NSCopying` value with the copy policy.
-public func newAssocKey<ValueType: NSCopying>(copyAtomic atomic: Bool) -> AssocKey<ValueType> {
-    let policy = atomic ? OBJC_ASSOCIATION_COPY : OBJC_ASSOCIATION_COPY_NONATOMIC
-    return AssocKey(_private: objc_AssociationPolicy(policy))
 }
 
 /// The data type that mediates access to associated objects.
 ///
 /// Use the `associatedObjects()` function to create an instance of this type.
 public struct AssociatedObjectView {
-    private var _object: AnyObject
+    private let _object: AnyObject
 
     private init(_private object: AnyObject) {
         _object = object
     }
 
     /// Get an associated object for a given key.
-    ///
-    /// Ideally this would be a subscript operator but those don't support
-    /// generics.
+    // Ideally this would be a subscript operator but those don't support
+    // generics.
     public func get<ValueType>(key: AssocKey<ValueType>) -> ValueType? {
-        return _get(key) {
-            // skip the runtime type test, we know it's the right type
-            let box = unsafeBitCast($0, _AssocValueBox<ValueType>.self)
+        guard let value = _get(key) else { return nil }
+        // use a type-check on ValueType instead of a type-check on the value
+        // this way the optimizer can hopefully strip it out for us
+        if ValueType.self is AnyObject {
+            return unsafeBitCast(value, ValueType.self)
+        } else {
+            let box = unsafeBitCast(value, _AssocValueBox<ValueType>.self)
             return box._storage
         }
     }
 
+    /// Get an associated object for a given key.
+    // This is a slight optimization to remove the type-check for unoptimized
+    // calls when we know the ValueType is an object at compile-time.
     public func get<ValueType: AnyObject>(key: AssocKey<ValueType>) -> ValueType? {
-        return _get(key) {
-            // skip the runtime type test, we know it's the right type
-            return unsafeBitCast($0, ValueType.self)
-        }
+        guard let value = _get(key) else { return nil }
+        // skip the runtime type test, we know it's the right type
+        return unsafeBitCast(value, ValueType.self)
     }
 
-    private func _get<ValueType>(key: AssocKey<ValueType>, _ f: AnyObject -> ValueType) -> ValueType? {
-        let p = UnsafePointer<()>(Unmanaged.passUnretained(key).toOpaque())
-        if let v: AnyObject = objc_getAssociatedObject(self._object, p) {
-            return f(v)
-        }
-        return nil
+    private func _get<ValueType>(key: AssocKey<ValueType>) -> AnyObject? {
+        let p = UnsafePointer<()>(Unmanaged.passUnretained(key._key).toOpaque())
+        return objc_getAssociatedObject(self._object, p)
     }
 
     /// Set an associated object for a given key.
-    ///
-    /// Ideally this would be a mutating subscript operator but those don't
-    /// support generics.
+    // Ideally this would be a mutating subscript operator but those don't
+    // support generics.
     public func set<ValueType>(key: AssocKey<ValueType>, value: ValueType?) {
-        if let v = value {
+        // type-check the ValueType instead of the value to avoid obj-c
+        // bridging. This way we'll match the expected behavior of get().
+        // Hopefully the optimizer will strip this out for us.
+        if ValueType.self is AnyObject {
+            _set(key, value as! AnyObject?)
+        } else if let v = value {
             _set(key, _AssocValueBox(v))
         } else {
             _set(key, nil)
         }
     }
 
+    /// Set an associated object for a given key.
+    // This is a slight optimization to remove the type-check for unoptimized
+    // cals when we know the ValueType is an object at compile-time.
     public func set<ValueType: AnyObject>(key: AssocKey<ValueType>, value: ValueType?) {
         _set(key, value)
     }
 
     private func _set<ValueType>(key: AssocKey<ValueType>, _ value: AnyObject?) {
-        let p = UnsafePointer<()>(Unmanaged.passUnretained(key).toOpaque())
-        if let v: AnyObject = value {
-            objc_setAssociatedObject(self._object, p, v, key._policy)
-        } else {
-            objc_setAssociatedObject(self._object, p, nil, key._policy)
-        }
+        let p = UnsafePointer<()>(Unmanaged.passUnretained(key._key).toOpaque())
+        objc_setAssociatedObject(self._object, p, value, key._policy)
     }
 }
 
-// Helper class that wraps values for use with associated objects
-private class _AssocValueBox<ValueType> {
+/// Helper class that is used as the identity for the associated object key.
+private final class _AssocKey {
+    static var allKeys: [_AssocKey] = []
+    static let keyQueue = dispatch_queue_create("swift-tsao key queue", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_BACKGROUND, 0))
+
+    init() {
+        // keep us alive forever
+        dispatch_async(_AssocKey.keyQueue) {
+            _AssocKey.allKeys.append(self)
+        }
+    }
+
+    deinit {
+        fatalError("_AssocKey should not be able to deinit")
+    }
+}
+
+/// Helper class that wraps values for use with associated objects
+private final class _AssocValueBox<ValueType> {
     var _storage: ValueType
 
     init(_ v: ValueType) {

@@ -1,18 +1,18 @@
 import Foundation
 import TSAO
 
-let intKey: AssocKey<Int> = newAssocKey()
-let strKey: AssocKey<NSString> = newAssocKey(copyAtomic: false)
-let aryKey: AssocKey<[String]> = newAssocKey()
+let intKey = AssocKey<Int>()
+let strKey = AssocKey<NSString>(copyAtomic: false)
+let aryKey = AssocKey<[String]>()
 
-let intKey2: AssocKey<Int> = newAssocKey()
+let intKey2 = AssocKey<Int>()
 
 class Foo: NSObject {}
 
 func setup() -> Foo {
     let f = Foo()
 
-    println("Setting a few associated objects...")
+    print("Setting a few associated objects...")
     // Note that each of these methods takes a strongly-typed value of the
     // correct associated type.
     // Trying to pass an Int to e.g. strKey would throw a compile-time error.
@@ -25,26 +25,26 @@ func setup() -> Foo {
 
 let f = setup()
 
-println("\nFetching associated objects...")
+print("\nFetching associated objects...")
 // note that each one of these method calls is returning the actual type
 // associated with the key, instead of returning Any or AnyObject
-println("intKey: \(associatedObjects(f).get(intKey))") // returns Int?
-println("strKey: \(associatedObjects(f).get(strKey))") // returns NSString?
-println("aryKey: \(associatedObjects(f).get(aryKey))") // returns String[]?
+print("intKey: \(associatedObjects(f).get(intKey))") // returns Int?
+print("strKey: \(associatedObjects(f).get(strKey))") // returns NSString?
+print("aryKey: \(associatedObjects(f).get(aryKey))") // returns String[]?
 
-println("\nFetching unset associated object...")
-println("intKey2: \(associatedObjects(f).get(intKey2))") // returns Int?
+print("\nFetching unset associated object...")
+print("intKey2: \(associatedObjects(f).get(intKey2))") // returns Int?
 
-println("\nSetting a copy associated value...")
+print("\nSetting a copy associated value...")
 let s = NSMutableString(string: "mutable string")
 associatedObjects(f).set(strKey, value: s) // takes NSString?
-println("strKey: \(s)")
-println("\nMutating string...")
+print("strKey: \(s)")
+print("\nMutating string...")
 s.appendString(" with changes")
-println("mutated: \(s)")
-println("\nFetching copy associated value...")
-println("strKey: \(associatedObjects(f).get(strKey))") // returns NSString?
+print("mutated: \(s)")
+print("\nFetching copy associated value...")
+print("strKey: \(associatedObjects(f).get(strKey))") // returns NSString?
 
-println("\nClearing associated value...")
+print("\nClearing associated value...")
 associatedObjects(f).set(aryKey, value: nil)           // takes String[]?
-println("aryKey: \(associatedObjects(f).get(aryKey))") // returns String[]?
+print("aryKey: \(associatedObjects(f).get(aryKey))") // returns String[]?

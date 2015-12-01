@@ -30,6 +30,8 @@ should be able to remove this check.
 ### Usage example
 
 ```swift
+import TSAO
+
 // create a new key that stores the value type Int
 let intKey = AssocKey<Int>()
 

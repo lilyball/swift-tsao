@@ -1,5 +1,12 @@
 ## Type-Safe Associated Objects in Swift
 
+![Platform](https://img.shields.io/badge/platform-ios%20%7C%20osx-lightgrey.svg)
+![Languages](https://img.shields.io/badge/languages-swift%202.1-orange.svg)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kballard/swift-tsao/blob/master/LICENSE.txt)
+[![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)][Carthage]
+
+[Carthage]: https://github.com/carthage/carthage
+
 TSAO is a small example of how to write type-safe associated objects using the
 power of generics. Objective-C associated objects are useful, but they are also
 untyped; every associated object is only known to be `id` at compile-time and
@@ -8,17 +15,17 @@ type.
 
 Generics allows us to do better. We can associate the value type with the key
 used to reference the value, and this lets us provide a strongly-typed value at
-compile-time with no runtime overhead. What's more, it allows us to store value
-types as associated objects, not just class types, by transparently boxing the
-value. This happens with again no runtime type-checking, although boxing a value
-does require heap allocation so it's not entirely free.
+compile-time with no runtime overhead¹. What's more, it allows us to store
+value types as associated objects, not just class types, by transparently
+boxing the value (although this involves a heap allocation).
 
 It's also possible to specify the association policy. For all values,
 atomic/nonatomic retain is supported. For class values, assign is also
 supported. And for `NSCopying` values, atomic/nonatomic copy is supported.
 
-A small usage sample is provided as `test.swift`, which will be compiled and run
-via `make`.
+¹ If the compiler can't tell whether the value conforms to `AnyObject` due to
+use in a generic context, it does require a type-check, but the optimizer
+should be able to remove this check.
 
 ### Usage example
 

@@ -17,58 +17,58 @@ Swift allows us to do better. We can associate the value type with the key used
 to reference the value, and this lets us provide a strongly-typed value at
 compile-time with no runtime overhead¹. What's more, it allows us to store
 value types as associated objects, not just object types, by transparently
-boxing the value (although this involves a heap allocation).
+boxing the value (although this involves a heap allocation). We can also invert
+the normal way associated objects work and present this type-safe adaptor using
+the semantics of a global map from `AnyObject` to `ValueType`.
 
 It's also possible to specify the association policy. For all values,
 atomic/nonatomic retain is supported. For class values, assign is also
 supported. And for `NSCopying` values, atomic/nonatomic copy is supported.
 
-To properly use this library, the `AssocKey` values you create should be static
+To properly use this library, the `AssocMap` values you create should be static
 or global values (they should live for the lifetime of the program). You aren't
-required to follow this rule, but any `AssocKey` you discard will end up
+required to follow this rule, but any `AssocMap`s you discard will end up
 leaking an object (this is the only way to ensure safety without a runtime
 penalty).
 
-¹ If the compiler can't tell whether the value conforms to `AnyObject` due to
-use in a generic context, it does require a type-check, but the optimizer
-should be able to remove this check.
+¹ It does require a type-check, but the optimizer should in theory be able to
+remove this check.
 
 ### Usage example
 
 ```swift
 import TSAO
 
-// create a new key that stores the value type Int
+// create a new map that stores the value type Int
 // note how this is a global value, so it lives for the whole program
-let intKey = AssocKey<Int>()
+let intMap = AssocMap<Int>()
 
-// fetch the associated object from `obj` using `intKey`
+// fetch the associated object from `obj` using `intMap`
 func lookup_int_object(obj: AnyObject) -> Int? {
-    // The get() method here returns an Int? because it takes intKey
-    return associatedObjects(obj).get(intKey)
+    // The subscript getter returns a value of type `Int?` so no casting is necessary
+    return intMap[obj]
 }
 
-// set the associated object for `intKey` on `obj`
+// set the associated object for `intMap` on `obj`
 func set_int_object(obj: AnyObject, val: Int?) {
-    // The set() method takes an Int? because of intKey
-    // Trying to pass a different value type would be a compile-time error
-    associatedObjects(obj).set(intKey, value: val)
+    // The subscript setter takes an `Int?` directly, trying to pass
+    // a value of any other type would be a compile-time error
+    intMap[obj] = val
 }
 
-// This key stores values of type NSString with the nonatomic copy policy
-let strKey = AssocKey<NSString>(copyAtomic: false)
+// This map stores values of type NSString with the nonatomic copy policy
+let strMap = AssocMap<NSString>(copyAtomic: false)
 
-// fetch the associated object from `obj` using `strKey`
+// fetch the associated object from `obj` using `strMap`
 func lookup_str_object(obj: AnyObject) -> NSString? {
-    // This get() method returns NSString? because of strKey
-    return associatedObjects(obj).get(strKey)
+    // The subscrip getter returns a value of type `NSString?`
+    return strMap[obj]
 }
 
-// set the associated object for `strKey` on `obj`
+// set the associated object for `strMap` on `obj`
 func set_str_object(obj: AnyObject, val: NSString?) {
-    // This set() method takes an NSString? value because of strKey
-    // Trying to pass an Int like we did with intKey would be a compile-time
-    // error
-    associatedObjects(obj).set(strKey, value: val)
+    // The subscript setter takes an `NSString?` directly, trying to pass
+    // an `Int?` like we did with `intMap` would be a compile-time error
+    strMap[obj] = val
 }
 ```

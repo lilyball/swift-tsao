@@ -9,13 +9,13 @@
 import XCTest
 @testable import TSAO
 
-let intKey = AssocKey<Int>()
-let strKey = AssocKey<NSString>(copyAtomic: false)
-let aryKey = AssocKey<[String]>()
-let tupleKey = AssocKey<(Int, CGRect)>()
+let intMap = AssocMap<Int>()
+let strMap = AssocMap<NSString>(copyAtomic: false)
+let aryMap = AssocMap<[String]>()
+let tupleMap = AssocMap<(Int, CGRect)>()
 
-let objectRetainKey = AssocKey<NSObject>()
-let objectAssignKey = AssocKey<NSObject>(assign: ())
+let objectRetainMap = AssocMap<NSObject>()
+let objectAssignMap = AssocMap<NSObject>(assign: ())
 
 class TSAOTests: XCTestCase {
     var helper: NSObject!
@@ -31,62 +31,62 @@ class TSAOTests: XCTestCase {
     }
     
     func testSettingAssociatedObjects() {
-        associatedObjects(helper).set(intKey, value: 42)
-        associatedObjects(helper).set(strKey, value: "this is an NSString")
-        associatedObjects(helper).set(aryKey, value: ["array", "of", "String", "values"])
+        intMap[helper] = 42
+        strMap[helper] = "this is an NSString"
+        aryMap[helper] = ["array", "of", "String", "values"]
         
-        XCTAssertEqual(associatedObjects(helper).get(intKey), 42)
-        XCTAssertEqual(associatedObjects(helper).get(strKey), "this is an NSString")
-        XCTAssertEqual(associatedObjects(helper).get(aryKey) ?? [], ["array", "of", "String", "values"])
+        XCTAssertEqual(intMap[helper], 42)
+        XCTAssertEqual(strMap[helper], "this is an NSString")
+        XCTAssertEqual(aryMap[helper] ?? [], ["array", "of", "String", "values"])
     }
     
     func testUnbridgeableValue() {
         let rect = CGRect(x: 5, y: 10, width: 15, height: 20)
-        associatedObjects(helper).set(tupleKey, value: (5, rect))
-        if let value = associatedObjects(helper).get(tupleKey) {
+        tupleMap[helper] = (5, rect)
+        if let value = tupleMap[helper] {
             XCTAssertEqual(value.0, 5)
             XCTAssertEqual(value.1, rect)
         } else {
-            XCTFail("associatedObjects(helper).get(tupleKey) returned nil")
+            XCTFail("tupleMap[helper] returned nil")
         }
     }
     
     func testOverwritingAssociatedObjects() {
-        associatedObjects(helper).set(intKey, value: 42)
-        XCTAssertEqual(associatedObjects(helper).get(intKey), 42)
-        associatedObjects(helper).set(intKey, value: 1)
-        XCTAssertEqual(associatedObjects(helper).get(intKey), 1)
-        associatedObjects(helper).set(intKey, value: nil)
-        XCTAssertNil(associatedObjects(helper).get(intKey))
+        intMap[helper] = 42
+        XCTAssertEqual(intMap[helper], 42)
+        intMap[helper] = 1
+        XCTAssertEqual(intMap[helper], 1)
+        intMap[helper] = nil
+        XCTAssertNil(intMap[helper])
     }
     
     func testGettingUnsetAssociatedObject() {
-        XCTAssertNil(associatedObjects(helper).get(intKey))
-        associatedObjects(helper).set(intKey, value: 42)
-        XCTAssertEqual(associatedObjects(helper).get(intKey), 42)
-        associatedObjects(helper).set(intKey, value: nil)
-        XCTAssertNil(associatedObjects(helper).get(intKey))
+        XCTAssertNil(intMap[helper])
+        intMap[helper] = 42
+        XCTAssertEqual(intMap[helper], 42)
+        intMap[helper] = nil
+        XCTAssertNil(intMap[helper])
     }
     
     func testCopyingAssociatedValue() {
         let s = NSMutableString(string: "mutable string")
-        associatedObjects(helper).set(strKey, value: s)
+        strMap[helper] = s
         s.appendString("was changed")
-        XCTAssertEqual(associatedObjects(helper).get(strKey), "mutable string")
+        XCTAssertEqual(strMap[helper], "mutable string")
     }
     
     func testReleaseValue() {
         weak var object: NSObject?
         autoreleasepool {
             let obj = NSObject()
-            associatedObjects(helper).set(objectRetainKey, value: obj)
+            objectRetainMap[helper] = obj
             object = obj
         }
         autoreleasepool {
             XCTAssertNotNil(object)
         }
         autoreleasepool {
-            associatedObjects(helper).set(objectRetainKey, value: nil)
+            objectRetainMap[helper] = nil
         }
         XCTAssertNil(object)
     }
@@ -95,7 +95,7 @@ class TSAOTests: XCTestCase {
         weak var object: NSObject?
         autoreleasepool {
             let obj = NSObject()
-            associatedObjects(helper).set(objectAssignKey, value: obj)
+            objectAssignMap[helper] = obj
             object = obj
         }
         XCTAssertNil(object)

@@ -29,9 +29,9 @@ public struct AssocMap<ValueType> {
             // use a type-check on ValueType instead of a type-check on the value
             // this way the optimizer can hopefully strip it out for us
             if ValueType.self is AnyObject {
-                return unsafeBitCast(value, ValueType.self)
+                return unsafeBitCast(value, to: ValueType.self)
             } else {
-                let box = unsafeBitCast(value, _AssocValueBox<ValueType>.self)
+                let box = unsafeBitCast(value, to: _AssocValueBox<ValueType>.self)
                 return box._storage
             }
         }
@@ -56,13 +56,13 @@ public struct AssocMap<ValueType> {
     private let _policy: objc_AssociationPolicy
     private let _key: _AssocKey = _AssocKey()
     
-    private func _get(object: AnyObject) -> AnyObject? {
-        let p = UnsafePointer<()>(unsafeAddressOf(_key))
+    private func _get(_ object: AnyObject) -> AnyObject? {
+        let p = UnsafePointer<()>(unsafeAddress(of: _key))
         return objc_getAssociatedObject(object, p)
     }
     
-    private func _set(object: AnyObject, _ value: AnyObject?) {
-        let p = UnsafePointer<()>(unsafeAddressOf(_key))
+    private func _set(_ object: AnyObject, _ value: AnyObject?) {
+        let p = UnsafePointer<()>(unsafeAddress(of: _key))
         objc_setAssociatedObject(object, p, value, _policy)
     }
 }
@@ -88,19 +88,17 @@ extension AssocMap where ValueType: NSCopying {
 /// Helper class that is used as the identity for the associated object key.
 private final class _AssocKey {
     static var allKeys: [_AssocKey] = []
-    static let keyQueue: dispatch_queue_t = {
+    static let keyQueue: DispatchQueue = {
         if #available(OSX 10.10, *) { // NOTE: Add iOS 8.0 to this check if using this file on a project that targets iOS 7
-            return dispatch_queue_create("swift-tsao key queue", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_BACKGROUND, 0))
+            return DispatchQueue(label: "swift-tsao key queue", attributes: [.serial, .qosBackground])
         } else {
-            let queue = dispatch_queue_create("swift-tsao key queue", DISPATCH_QUEUE_SERIAL);
-            dispatch_set_target_queue(queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0))
-            return queue
+            return DispatchQueue(label: "swift-tsao key queue", attributes: .serial, target: DispatchQueue.global(attributes: .priorityBackground))
         }
     }()
 
     init() {
         // keep us alive forever
-        dispatch_async(_AssocKey.keyQueue) {
+        _AssocKey.keyQueue.async {
             _AssocKey.allKeys.append(self)
         }
     }

@@ -90,9 +90,9 @@ private final class _AssocKey {
     static var allKeys: [_AssocKey] = []
     static let keyQueue: DispatchQueue = {
         if #available(OSX 10.10, *) { // NOTE: Add iOS 8.0 to this check if using this file on a project that targets iOS 7
-            return DispatchQueue(label: "swift-tsao key queue", attributes: [.serial, .qosBackground])
+            return DispatchQueue(label: "swift-tsao key queue", qos: .background)
         } else {
-            return DispatchQueue(label: "swift-tsao key queue", attributes: .serial, target: DispatchQueue.global(attributes: .priorityBackground))
+            return DispatchQueue(label: "swift-tsao key queue", target: DispatchQueue.global(priority: .background))
         }
     }()
 

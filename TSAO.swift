@@ -28,7 +28,7 @@ public struct AssocMap<ValueType> {
             guard let value = _get(object) else { return nil }
             // use a type-check on ValueType instead of a type-check on the value
             // this way the optimizer can hopefully strip it out for us
-            if ValueType.self is AnyObject {
+            if ValueType.self is AnyObject.Type {
                 return unsafeBitCast(value, to: ValueType.self)
             } else {
                 let box = unsafeBitCast(value, to: _AssocValueBox<ValueType>.self)
@@ -39,8 +39,8 @@ public struct AssocMap<ValueType> {
             // type-check the ValueType instead of the value to avoid obj-c bridging.
             // This way we'll match the expected boxing behavior of the getter.
             // Hopefully the optimizer will strip this out for us.
-            if ValueType.self is AnyObject {
-                _set(object, newValue as! AnyObject?)
+            if ValueType.self is AnyObject.Type {
+                _set(object, newValue as AnyObject?)
             } else if let v = newValue {
                 _set(object, _AssocValueBox<ValueType>(v))
             } else {
@@ -49,7 +49,7 @@ public struct AssocMap<ValueType> {
         }
     }
 
-    private init(_policy: objc_AssociationPolicy) {
+    fileprivate init(_policy: objc_AssociationPolicy) {
         self._policy = _policy
     }
 
@@ -57,12 +57,12 @@ public struct AssocMap<ValueType> {
     private let _key: _AssocKey = _AssocKey()
     
     private func _get(_ object: AnyObject) -> AnyObject? {
-        let p = UnsafePointer<()>(unsafeAddress(of: _key))
-        return objc_getAssociatedObject(object, p)
+        let p = Unmanaged.passUnretained(_key).toOpaque()
+        return objc_getAssociatedObject(object, p) as AnyObject?
     }
     
     private func _set(_ object: AnyObject, _ value: AnyObject?) {
-        let p = UnsafePointer<()>(unsafeAddress(of: _key))
+        let p = Unmanaged.passUnretained(_key).toOpaque()
         objc_setAssociatedObject(object, p, value, _policy)
     }
 }

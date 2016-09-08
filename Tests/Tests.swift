@@ -71,7 +71,7 @@ class TSAOTests: XCTestCase {
     func testCopyingAssociatedValue() {
         let s = NSMutableString(string: "mutable string")
         strMap[helper] = s
-        s.appendString("was changed")
+        s.append("was changed")
         XCTAssertEqual(strMap[helper], "mutable string")
     }
     

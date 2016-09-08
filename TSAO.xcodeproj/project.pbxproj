@@ -29,7 +29,7 @@
 		0A1A095B1C0D414C00A91E4B /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		0A1A095D1C0D414C00A91E4B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0A1A09661C0D427200A91E4B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		0A1A09671C0D427F00A91E4B /* TSAO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TSAO.swift; sourceTree = "<group>"; };
+		0A1A09671C0D427F00A91E4B /* TSAO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TSAO.swift; path = Sources/TSAO.swift; sourceTree = "<group>"; };
 		0A1A09691C0D458300A91E4B /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 

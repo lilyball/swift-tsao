@@ -1,6 +1,6 @@
 ## Type-Safe Associated Objects in Swift
 
-[![Version](https://img.shields.io/badge/version-v2.0-blue.svg)](https://github.com/kballard/swift-tsao/releases/latest)
+[![Version](https://img.shields.io/badge/version-v2.0.1-blue.svg)](https://github.com/kballard/swift-tsao/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift%202.2-orange.svg)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kballard/swift-tsao/blob/master/LICENSE.txt)

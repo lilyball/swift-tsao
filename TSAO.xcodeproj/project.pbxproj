@@ -84,10 +84,18 @@
 		0A1A095A1C0D414C00A91E4B /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				0A79B50B1E8B782400A8C727 /* TSAOTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		0A79B50B1E8B782400A8C727 /* TSAOTests */ = {
+			isa = PBXGroup;
+			children = (
 				0A1A095B1C0D414C00A91E4B /* Tests.swift */,
 				0A1A095D1C0D414C00A91E4B /* Info.plist */,
 			);
-			path = Tests;
+			path = TSAOTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -363,7 +371,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = Tests/Info.plist;
+				INFOPLIST_FILE = Tests/TSAOTests/Info.plist;
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tildesoft.TSAOTests;
@@ -377,7 +385,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = Tests/Info.plist;
+				INFOPLIST_FILE = Tests/TSAOTests/Info.plist;
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tildesoft.TSAOTests;

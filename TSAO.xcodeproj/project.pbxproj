@@ -31,6 +31,7 @@
 		0A1A09661C0D427200A91E4B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		0A1A09671C0D427F00A91E4B /* TSAO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TSAO.swift; path = Sources/TSAO.swift; sourceTree = "<group>"; };
 		0A1A09691C0D458300A91E4B /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		0A5E5A2420B5340200948888 /* swift-tsao.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; path = "swift-tsao.podspec"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +58,7 @@
 			children = (
 				0A1A09661C0D427200A91E4B /* README.md */,
 				0A1A09691C0D458300A91E4B /* LICENSE.txt */,
+				0A5E5A2420B5340200948888 /* swift-tsao.podspec */,
 				0A1A09671C0D427F00A91E4B /* TSAO.swift */,
 				0A1A094E1C0D414C00A91E4B /* Supporting Files */,
 				0A1A095A1C0D414C00A91E4B /* Tests */,

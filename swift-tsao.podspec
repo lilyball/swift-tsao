@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
 
   s.homepage     = "https://github.com/kballard/swift-tsao"
   s.license      = { :type => "MIT", :file => "LICENSE.txt" }
-  s.author             = { "Kevin Ballard" => "kevin@sb.org" }
+  s.author             = { "Lily Ballard" => "lily@sb.org" }
 
   s.ios.deployment_target = "8.0"
   s.osx.deployment_target = "10.9"

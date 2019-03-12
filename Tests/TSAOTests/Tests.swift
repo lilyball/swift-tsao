@@ -2,8 +2,8 @@
 //  TSAOTests.swift
 //  TSAOTests
 //
-//  Created by Kevin Ballard on 11/30/15.
-//  Copyright © 2015 Kevin Ballard. All rights reserved.
+//  Created by Lily Ballard on 11/30/15.
+//  Copyright © 2015 Lily Ballard. All rights reserved.
 //
 
 import XCTest

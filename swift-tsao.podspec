@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
     expected type.
                    DESC
 
-  s.homepage     = "https://github.com/kballard/swift-tsao"
+  s.homepage     = "https://github.com/lilyball/swift-tsao"
   s.license      = { :type => "MIT", :file => "LICENSE.txt" }
   s.author             = { "Lily Ballard" => "lily@sb.org" }
 
@@ -21,6 +21,6 @@ Pod::Spec.new do |s|
 
   s.swift_version = '4.0'
 
-  s.source       = { :git => "https://github.com/kballard/swift-tsao.git", :tag => "v#{s.version}" }
+  s.source       = { :git => "https://github.com/lilyball/swift-tsao.git", :tag => "v#{s.version}" }
   s.source_files  = "Sources/*.swift"
 end

@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "TSAO"
+    name: "TSAO",
     platforms: [
         .iOS(.v14),
     ],

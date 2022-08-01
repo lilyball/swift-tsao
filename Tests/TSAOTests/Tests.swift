@@ -16,6 +16,7 @@ let tupleMap = AssocMap<(Int, CGRect)>()
 
 let objectRetainMap = AssocMap<NSObject>()
 let objectAssignMap = AssocMap<NSObject>(assign: ())
+let objectSafeAssignMap = AssocMap<NSObject>(safeAssign: ())
 
 class TSAOTests: XCTestCase {
     var helper: NSObject!
@@ -99,5 +100,17 @@ class TSAOTests: XCTestCase {
             object = obj
         }
         XCTAssertNil(object)
+    }
+    
+    func testSafeAssignValue() {
+        weak var object: NSObject?
+        autoreleasepool {
+            let obj = NSObject()
+            objectSafeAssignMap[helper] = obj
+            object = obj
+            XCTAssertEqual(obj, objectSafeAssignMap[helper])
+        }
+        XCTAssertNil(object)
+        XCTAssertNil(objectSafeAssignMap[helper])
     }
 }

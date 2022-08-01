@@ -49,21 +49,37 @@ public struct AssocMap<ValueType> {
         }
     }
 
-    fileprivate init(_policy: objc_AssociationPolicy) {
+    fileprivate init(_policy: objc_AssociationPolicy, useWeakObjectContainer: Bool = false) {
+        precondition(!useWeakObjectContainer || _policy == .OBJC_ASSOCIATION_RETAIN)
         self._policy = _policy
+        self.useWeakObjectContainer = useWeakObjectContainer
     }
 
     private let _policy: objc_AssociationPolicy
     private let _key: _AssocKey = _AssocKey()
+    private let useWeakObjectContainer: Bool
     
     private func _get(_ object: AnyObject) -> AnyObject? {
         let p = Unmanaged.passUnretained(_key).toOpaque()
-        return objc_getAssociatedObject(object, p) as AnyObject?
+        if useWeakObjectContainer {
+            return (objc_getAssociatedObject(object, p) as? WeakObjectContainer)?.object
+        } else {
+            return objc_getAssociatedObject(object, p) as AnyObject?
+        }
     }
     
     private func _set(_ object: AnyObject, _ value: AnyObject?) {
         let p = Unmanaged.passUnretained(_key).toOpaque()
-        objc_setAssociatedObject(object, p, value, _policy)
+        if useWeakObjectContainer {
+            let container = (objc_getAssociatedObject(object, p) as? WeakObjectContainer) ?? {
+               let new = WeakObjectContainer()
+                objc_setAssociatedObject(object, p, new, _policy)
+                return new
+            }()
+            container.object = value
+        } else {
+            objc_setAssociatedObject(object, p, value, _policy)
+        }
     }
 }
 
@@ -73,6 +89,11 @@ extension AssocMap where ValueType: AnyObject {
     /// This looks a bit weird, but it can be invoked as `AssocMap(assign: ())`.
     public init(assign: ()) {
         self.init(_policy: .OBJC_ASSOCIATION_ASSIGN)
+    }
+    
+    /// Initializes an `AssocMap` with a safe assign policy. Accessing the value will return nil if object has been deallocated.
+    public init(safeAssign: ()) {
+        self.init(_policy: .OBJC_ASSOCIATION_RETAIN, useWeakObjectContainer: true)
     }
 }
 
@@ -115,4 +136,8 @@ private final class _AssocValueBox<ValueType> {
     init(_ v: ValueType) {
         _storage = v
     }
+}
+
+private final class WeakObjectContainer {
+    weak var object: AnyObject?
 }
